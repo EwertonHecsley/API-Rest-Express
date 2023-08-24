@@ -35,7 +35,7 @@ const login = (req, res) => {
 
     const senha_key = process.env.senha_key;
 
-    const token = jwt.sign({ id }, senha_key, { expiresIn: '10 m' });
+    const token = jwt.sign({ id }, senha_key, { expiresIn: '1h' });
 
     const resposta = {
         mensagem: 'Usuario logado com sucesso',
@@ -53,4 +53,30 @@ const detalharUsuario = (req, res) => {
     return res.status(200).json(req.usuario);
 };
 
-module.exports = { cadastrarUsuario, listarUsuarios, login, detalharUsuario }
+const atualizarUsuario = async (req, res) => {
+    const { nome, email, senha } = req.body;
+    const { id } = req.params;
+
+    const novaSenhaCriptografada = await bcrypt.hash(senha, 10);
+
+    try {
+        const atualizacaoUsuario = await pool.query(`
+        UPDATE usuarios
+        SET nome = $1,email = $2,senha = $3
+        WHERE id = $4
+        RETURNING id,nome,email
+        `, [nome, email, novaSenhaCriptografada, id]);
+
+        const resposta = {
+            mensagem: "Usuário atualizado com sucesso",
+            usuario: { ...atualizacaoUsuario.rows[0] }
+        };
+
+        return res.status(200).json(resposta);
+
+    } catch (error) {
+        return res.status(500).json({ mensgem: error.message });
+    }
+};
+
+module.exports = { cadastrarUsuario, listarUsuarios, login, detalharUsuario, atualizarUsuario }

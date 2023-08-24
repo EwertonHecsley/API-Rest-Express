@@ -75,4 +75,27 @@ const intermediarioDetalharUsuario = async (req, res, next) => {
     };
 };
 
-module.exports = { verificaUsuario, intermediarioLogin, intermediarioDetalharUsuario }
+const intermediarioAtualizarUsuario = async (req, res, next) => {
+    const { nome, email, senha } = req.body;
+    const { id } = req.params;
+    const emailbd = req.usuario.email
+
+    if (!nome || !email || !senha) {
+        return res.status(400).json({ mensagem: 'Todos os campos devem serm preenchidos' });
+    };
+
+    try {
+        const consultaBD = await pool.query(`SELECT * FROM usuarios WHERE id = $1 AND email = $2`, [id, emailbd]);
+
+        if (consultaBD.rows.length === 0) {
+            return res.status(401).json({ mensagem: 'Identificador de usuario inválido' })
+        };
+
+        next();
+
+    } catch (error) {
+        return res.status(500).json({ mensagem: error.message })
+    };
+};
+
+module.exports = { verificaUsuario, intermediarioLogin, intermediarioDetalharUsuario, intermediarioAtualizarUsuario }
