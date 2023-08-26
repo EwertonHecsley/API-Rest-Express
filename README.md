@@ -1,4 +1,4 @@
-# Estudos - API REST com Express, Bcrypt, JWT, Axios e PostgreSQL
+# Estudo - API REST com Express, Bcrypt, JWT, Axios e PostgreSQL
 
 Este é um simples projeto, com a finalidade de estudar e aperfeiçoar meu desenvolvimento  em relação ao Back end. Eu explorei várias tecnologias e conceitos relacionados ao desenvolvimento de APIs REST.
 
