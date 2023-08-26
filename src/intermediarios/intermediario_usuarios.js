@@ -1,5 +1,6 @@
 const pool = require('../conexao');
 const bcrypt = require('bcrypt');
+const axios = require('axios');
 
 const verificaUsuario = async (req, res, next) => {
     const { nome, email, senha } = req.body;
@@ -98,4 +99,57 @@ const intermediarioAtualizarUsuario = async (req, res, next) => {
     };
 };
 
-module.exports = { verificaUsuario, intermediarioLogin, intermediarioDetalharUsuario, intermediarioAtualizarUsuario }
+const intermediarioConsultaEmpresa = async (req, res, next) => {
+    const { dominio } = req.query
+
+    if (!dominio) {
+        return res.status(400).json({ mensagem: 'Dominio inválido ou ausente' })
+    };
+
+    const senha_api = process.env.senha_api
+
+    const url = `https://companyenrichment.abstractapi.com/v1/?api_key=${senha_api}&domain=${dominio}`;
+
+    try {
+        const resposta = await axios.get(url);
+
+        const { data } = resposta;
+
+        const { name } = data;
+
+        if (name === null) {
+            return res.status(404).json({ mensagem: 'Empresa não encontrada' })
+        };
+
+        req.consulta = data;
+
+        next()
+
+    } catch (error) {
+        return res.status(500).json({ mensgem: error.message });
+    };
+};
+
+const intermediarioDeletarEmpresa = async (req, res, next) => {
+    const usuario_id = req.usuario.id;
+    const { id } = req.params;
+
+    try {
+        const usuarioBd = await pool.query(`SELECT * FROM empresas WHERE usuario_id = $1`, [usuario_id]);
+
+        if (usuarioBd.rows.length === 0) {
+            return res.status(404).json({ mensagem: 'Usuario não tem empresa cadastrada com esse ID' })
+        };
+
+        if (!usuarioBd.rows.some((empresa) => empresa.id === Number(id))) {
+            return res.status(404).json({ mensagem: 'Usuario não tem empresa cadastrada com esse ID' })
+        };
+
+        next();
+
+    } catch (error) {
+        return res.status(500).json({ mensagem: error.message });
+    };
+};
+
+module.exports = { verificaUsuario, intermediarioLogin, intermediarioDetalharUsuario, intermediarioAtualizarUsuario, intermediarioConsultaEmpresa, intermediarioDeletarEmpresa }

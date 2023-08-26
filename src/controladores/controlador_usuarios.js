@@ -79,4 +79,42 @@ const atualizarUsuario = async (req, res) => {
     }
 };
 
-module.exports = { cadastrarUsuario, listarUsuarios, login, detalharUsuario, atualizarUsuario }
+const consultarEmprsa = async (req, res) => {
+    const { name, country, locality, industry, domain } = req.consulta;
+    const { id } = req.usuario;
+
+    try {
+        const empresa = await pool.query(`
+        INSERT INTO empresas(nome,pais,cidade,seguimento,dominio,usuario_id)
+        VALUES($1,$2,$3,$4,$5,$6) RETURNING *
+        `, [name, country, locality, industry, domain, id]);
+
+        const resposta = {
+            mensgem: 'Empresa cadastrada',
+            empresa: empresa.rows
+        }
+
+        return res.status(201).json(resposta)
+
+    } catch (error) {
+        return res.status(500).json({ mensagem: error.message });
+    };
+};
+
+const deletarEmpresa = async (req, res) => {
+    const usuario_id = req.usuario.id;
+    const { id } = req.params;
+
+    try {
+        const empresa = await pool.query(`
+        DELETE FROM empresas
+        WHERE id = $1 AND usuario_id = $2
+        `, [id, usuario_id])
+
+        return res.status(200).json({ mensgem: 'Empresa deletada com sucesso' });
+    } catch (error) {
+        return res.status(500).json({ mensagem: error.message });
+    };
+};
+
+module.exports = { cadastrarUsuario, listarUsuarios, login, detalharUsuario, atualizarUsuario, consultarEmprsa, deletarEmpresa };
